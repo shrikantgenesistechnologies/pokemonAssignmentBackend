@@ -26,6 +26,5 @@ export const SwaggerDocumentConfig = () => {
     .setDescription(process.env.SWAGGER_SERVER_DESCRIPTION)
     .setVersion(process.env.SWAGGER_SERVER_VERSION)
     .addServer(process.env.SWAGGER_SERVER_URL, process.env.SWAGGER_SERVER_NAME)
-    .addBearerAuth()
     .build();
 };

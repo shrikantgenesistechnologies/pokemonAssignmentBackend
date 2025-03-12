@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { Pokemons } from '../entity/pokemon.entity';
+import { Pokemons } from '../entity/pokemons.entity';
 import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreatePokemonDto extends PickType(Pokemons, ['originalId']) {

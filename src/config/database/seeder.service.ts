@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Organizations } from '../../organizations/entity/organization.entity';
-import { Users } from '../../users/entity/user.entity';
-import { Pokemons } from '../../pokemons/entity/pokemon.entity';
+import { Organizations } from '../../organizations/entity/organizations.entity';
+import { Users } from '../../users/entity/users.entity';
+import { Pokemons } from '../../pokemons/entity/pokemons.entity';
 import { faker } from '@faker-js/faker';
 import { HASHED_PASSWORD } from '../../utils/constants';
 import axios from 'axios';

@@ -3,21 +3,17 @@ import {
   Post,
   Body,
   Req,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
-import { Request } from 'express';
-import { JwtAuthGuard } from './guards/auth.guard';
+import { Request, Response } from 'express';
 import { RegisterDto } from './dtos/register.dto';
 import { ApiControllerTag } from '../swagger/tags';
 import { ApiXGetResponses } from '../utils/swagger/swagger';
-import { AuthModel } from './model/auth.model';
-import { ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiBearerAuth()
 @Controller(ApiControllerTag.Auth)
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -27,10 +23,13 @@ export class AuthController {
   @ApiXGetResponses({
     operationId: 'login_user',
     summary: 'Login User',
-    type: AuthModel,
+    type: String,
   })
-  async login(@Body() loginDto: LoginDto) {
-    return await this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return await this.authService.login(loginDto, response);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -38,11 +37,13 @@ export class AuthController {
   @ApiXGetResponses({
     operationId: 'logout_user',
     summary: 'Logout user',
-    type: 'string',
+    type: String,
   })
-  @UseGuards(JwtAuthGuard)
-  async logout(@Req() request: Request) {
-    return await this.authService.logout(request);
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return await this.authService.logout(request, response);
   }
 
   @HttpCode(HttpStatus.CREATED)
@@ -50,9 +51,13 @@ export class AuthController {
   @ApiXGetResponses({
     operationId: 'register',
     summary: 'register User',
-    type: AuthModel,
+    type: String,
   })
-  async register(@Body() registerDto: RegisterDto) {
-    return await this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ) {
+    return await this.authService.register(registerDto, response, request);
   }
 }

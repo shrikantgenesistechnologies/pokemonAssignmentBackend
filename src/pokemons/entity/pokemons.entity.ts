@@ -4,12 +4,13 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
-import { Organizations } from '../../organizations/entity/organization.entity';
+import { Organizations } from '../../organizations/entity/organizations.entity';
 import { IsNotEmpty, IsString, IsOptional, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Favorite } from '../../favorites/entity/favorite.entity';
+import { Favorites } from '../../favorites/entity/favorites.entity';
 
 @Entity()
 export class Pokemons {
@@ -42,7 +43,7 @@ export class Pokemons {
     example:
       'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/320.png',
   })
-  @Column()
+  @Column({ name: 'original_id' })
   @IsString({ message: 'OriginalId must be string' })
   @IsOptional()
   originalId: string;
@@ -50,8 +51,10 @@ export class Pokemons {
   @ManyToOne(() => Organizations, (org) => org.pokemons, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'organization_id' })
   organization: Organizations;
 
-  @OneToMany(() => Favorite, (favorite) => favorite.pokemon)
-  favorites: Favorite[];
+  @OneToMany(() => Favorites, (favorite) => favorite.pokemon)
+  @JoinColumn({ name: 'favorite_id' })
+  favorites: Favorites[];
 }

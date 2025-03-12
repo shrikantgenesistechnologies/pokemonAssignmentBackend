@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Users } from '../../users/entity/user.entity';
-import { Pokemons } from '../../pokemons/entity/pokemon.entity';
+import { Users } from '../../users/entity/users.entity';
+import { Pokemons } from '../../pokemons/entity/pokemons.entity';
 import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';

@@ -9,12 +9,13 @@ import {
   HttpStatus,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import { Users } from './entity/user.entity';
-import { ApiTags, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Users } from './entity/users.entity';
+import { ApiTags, ApiParam } from '@nestjs/swagger';
 import {
   ApiXDeleteResponses,
   ApiXGetResponses,
@@ -23,8 +24,8 @@ import {
 } from '../utils/swagger/swagger';
 import { ApiControllerTag } from '../swagger/tags';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { Request } from 'express';
 
-@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @ApiTags(ApiControllerTag.Users)
 @Controller(ApiControllerTag.Users)
@@ -49,8 +50,8 @@ export class UsersController {
     summary: 'List all Users',
     type: [Users],
   })
-  async findAllUsers(): Promise<Users[]> {
-    return this.usersService.findAllUsers();
+  async findAllUsers(@Req() request: Request): Promise<Users[]> {
+    return this.usersService.findAllUsers(request);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -65,8 +66,11 @@ export class UsersController {
     summary: 'Get a single User by ID',
     type: Users,
   })
-  async findOneUser(@Param('id') id: string): Promise<Users> {
-    return this.usersService.findOneUser(id);
+  async findOneUser(
+    @Param('id') id: string,
+    @Req() request: Request,
+  ): Promise<Users> {
+    return this.usersService.findOneUser(id, request);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -84,8 +88,9 @@ export class UsersController {
   async updateOneUser(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Req() request: Request,
   ): Promise<Users> {
-    return this.usersService.updateOneUser(id, updateUserDto);
+    return this.usersService.updateOneUser(id, updateUserDto, request);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -98,9 +103,12 @@ export class UsersController {
   @ApiXDeleteResponses({
     operationId: 'delete_user',
     summary: 'Delete a User by ID',
-    type: 'string',
+    type: String,
   })
-  async deleteOneUser(@Param('id') id: string): Promise<void> {
-    await this.usersService.deleteOneUser(id);
+  async deleteOneUser(
+    @Param('id') id: string,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.usersService.deleteOneUser(id, request);
   }
 }

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Organizations } from './entity/organization.entity';
+import { Organizations } from './entity/organizations.entity';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { UpdateOrganizationDto } from './dtos/update-organization.dto';
 
@@ -115,7 +115,7 @@ export class OrganizationsService {
     }
   }
 
-  async deleteOneOrganization(id: string): Promise<void> {
+  async deleteOneOrganization(id: string): Promise<{ message: string }> {
     try {
       const organization = await this.organizationsRepository.findOne({
         where: { id },
@@ -126,6 +126,7 @@ export class OrganizationsService {
       }
 
       await this.organizationsRepository.remove(organization);
+      return { message: 'Record deleted successfully' };
     } catch (error) {
       this.logger.error(
         JSON.stringify({

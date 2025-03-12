@@ -1,20 +1,15 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Pokemons } from './entity/pokemon.entity';
+import { Pokemons } from './entity/pokemons.entity';
 import { CreatePokemonDto } from './dtos/create-pokemon.dto';
 import { UpdatePokemonDto } from './dtos/update-pokemon.dto';
-import { Organizations } from '../organizations/entity/organization.entity';
+import { Organizations } from '../organizations/entity/organizations.entity';
 import { Request } from 'express';
 import { ListPokemonQueryDto } from './dtos/list-pokemon.dto';
 import { User } from '../users/interfaces/user.interface';
 import { FavoriteStatus } from '../enums/favorites-status.enum';
-import { Favorite } from '../favorites/entity/favorite.entity';
+import { Favorites } from '../favorites/entity/favorites.entity';
 import { ConfigService } from '@nestjs/config';
 import { GetPokemonResponseDto } from './dtos/get-pokemon.dto';
 @Injectable()
@@ -26,8 +21,8 @@ export class PokemonsService {
     private readonly pokemonRepository: Repository<Pokemons>,
     @InjectRepository(Organizations)
     private readonly organizationRepository: Repository<Organizations>,
-    @InjectRepository(Favorite)
-    private readonly favoriteRepository: Repository<Favorite>,
+    @InjectRepository(Favorites)
+    private readonly favoriteRepository: Repository<Favorites>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -55,13 +50,13 @@ export class PokemonsService {
     }
   }
   async findAllPokemons(
-    req: Request,
+    request: Request,
     query: ListPokemonQueryDto,
   ): Promise<any> {
     try {
       const { skip = 0, take = 5 } = query;
-      const organizationId = (req?.user as User)?.organizationId;
-      const userId = (req?.user as User)?.id;
+      const organizationId = (request?.user as User)?.organizationId;
+      const userId = (request?.user as User)?.id;
 
       const [pokemons, total] = await this.pokemonRepository.findAndCount({
         where: { organization: { id: organizationId } },
@@ -117,10 +112,15 @@ export class PokemonsService {
     }
   }
 
-  async findOnePokemon(id: string): Promise<GetPokemonResponseDto> {
+  async findOnePokemon(
+    id: string,
+    request: Request,
+  ): Promise<GetPokemonResponseDto> {
     try {
+      const organizationId = (request?.user as User)?.organizationId;
+
       const pokemon = await this.pokemonRepository.findOne({
-        where: { id },
+        where: { id, organization: { id: organizationId } },
       });
       if (!pokemon) {
         throw new NotFoundException('Pokemon not found');
@@ -141,17 +141,10 @@ export class PokemonsService {
   async updatePokemon(
     id: string,
     updatePokemonDto: UpdatePokemonDto,
+    request: Request,
   ): Promise<GetPokemonResponseDto> {
     try {
-      const pokemon = await this.findOnePokemon(id);
-      const organization = await this.organizationRepository.findOne({
-        where: { id: updatePokemonDto.organizationId },
-      });
-
-      if (!organization) {
-        throw new BadRequestException('Organization Id is invalid');
-      }
-
+      const pokemon = await this.findOnePokemon(id, request);
       Object.assign(pokemon, updatePokemonDto);
       await this.pokemonRepository.save(pokemon);
       return pokemon;
@@ -167,10 +160,21 @@ export class PokemonsService {
     }
   }
 
-  async deletePokemon(id: string): Promise<void> {
+  async deletePokemon(
+    id: string,
+    request: Request,
+  ): Promise<{ message: string }> {
     try {
-      const pokemon = await this.pokemonRepository.findOne({ where: { id } });
+      const organizationId = (request?.user as User)?.organizationId;
+      const pokemon = await this.pokemonRepository.findOne({
+        where: { id, organization: { id: organizationId } },
+      });
+
+      if (!pokemon) {
+        throw new NotFoundException('Pokemon not found');
+      }
       await this.pokemonRepository.remove(pokemon);
+      return { message: 'Record deleted successfully' };
     } catch (error) {
       this.logger.error(
         JSON.stringify({
@@ -183,8 +187,12 @@ export class PokemonsService {
     }
   }
 
-  async updateFavoriteStatus({ userId, pokemonId, favoriteStatus }) {
+  async updateFavoriteStatus({ request, pokemonId, favoriteStatus }) {
     try {
+      const user = request?.user as User;
+      const userId = user.id;
+      await this.findOnePokemon(pokemonId, request);
+
       const existingFavorite = await this.favoriteRepository.findOne({
         where: { user: { id: userId }, pokemon: { id: pokemonId } },
       });

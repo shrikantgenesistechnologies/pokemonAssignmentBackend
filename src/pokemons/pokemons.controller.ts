@@ -17,20 +17,19 @@ import { CreatePokemonDto } from './dtos/create-pokemon.dto';
 import { UpdatePokemonDto } from './dtos/update-pokemon.dto';
 import { ApiControllerTag } from '../swagger/tags';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiParam } from '@nestjs/swagger';
 import {
   ApiXDeleteResponses,
   ApiXGetResponses,
   ApiXListResponses,
   ApiXUpdateResponses,
 } from '../utils/swagger/swagger';
-import { Pokemons } from './entity/pokemon.entity';
+import { Pokemons } from './entity/pokemons.entity';
 import { ListPokemonQueryDto } from './dtos/list-pokemon.dto';
 import { Request } from 'express';
 import { FavoriteStatus } from '../enums/favorites-status.enum';
-import { User } from '../users/interfaces/user.interface';
 import { GetPokemonResponseDto } from './dtos/get-pokemon.dto';
-@ApiBearerAuth()
+
 @UseGuards(JwtAuthGuard)
 @Controller(ApiControllerTag.Pokemons)
 export class PokemonController {
@@ -54,8 +53,8 @@ export class PokemonController {
     summary: 'List all Pokémon',
     type: [Pokemons],
   })
-  findAll(@Req() req: Request, @Query() query: ListPokemonQueryDto) {
-    return this.pokemonService.findAllPokemons(req, query);
+  findAll(@Req() request: Request, @Query() query: ListPokemonQueryDto) {
+    return this.pokemonService.findAllPokemons(request, query);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -73,11 +72,10 @@ export class PokemonController {
   async toggleFavoriteStatus(
     @Param('id') pokemonId: string,
     @Query('favoriteStatus') favoriteStatus: FavoriteStatus,
-    @Req() req: Request,
+    @Req() request: Request,
   ) {
-    const userId = (req.user as User)?.id;
     return this.pokemonService.updateFavoriteStatus({
-      userId,
+      request,
       pokemonId,
       favoriteStatus,
     });
@@ -94,8 +92,8 @@ export class PokemonController {
     summary: 'Get a single Pokémon by ID',
     type: GetPokemonResponseDto,
   })
-  findOne(@Param('id') id: string) {
-    return this.pokemonService.findOnePokemon(id);
+  findOne(@Param('id') id: string, @Req() request: Request) {
+    return this.pokemonService.findOnePokemon(id, request);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -110,8 +108,12 @@ export class PokemonController {
     summary: 'Update a Pokémon by ID',
     type: UpdatePokemonDto,
   })
-  update(@Param('id') id: string, @Body() updatePokemonDto: UpdatePokemonDto) {
-    return this.pokemonService.updatePokemon(id, updatePokemonDto);
+  update(
+    @Param('id') id: string,
+    @Body() updatePokemonDto: UpdatePokemonDto,
+    @Req() request: Request,
+  ) {
+    return this.pokemonService.updatePokemon(id, updatePokemonDto, request);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -124,9 +126,12 @@ export class PokemonController {
   @ApiXDeleteResponses({
     operationId: 'delete_pokemon',
     summary: 'Delete a Pokémon by ID',
-    type: 'string',
+    type: String,
   })
-  remove(@Param('id') id: string) {
-    return this.pokemonService.deletePokemon(id);
+  remove(
+    @Param('id') id: string,
+    @Req() request: Request,
+  ): Promise<{ message: string }> {
+    return this.pokemonService.deletePokemon(id, request);
   }
 }

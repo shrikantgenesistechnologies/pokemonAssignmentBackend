@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import { GlobalResponseInterceptor } from './interceptor/global-response.interceptor';
 import { GlobalExceptionFilter } from './exception/global-exception.filter';
 import { SetupSwaggerDocumentation } from './swagger';
+import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 
 const NestAppOptions: NestApplicationOptions = {
   bodyParser: true,
@@ -20,10 +22,21 @@ export const bootstrap = async () => {
   app.setGlobalPrefix('api');
 
   //Helmet
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          upgradeInsecureRequests: null,
+        },
+      },
+    }),
+  );
 
-  // enabling CORS
-  app.enableCors();
+  app.use(express.json());
+
+  app.use(express.urlencoded({ extended: true }));
+
+  app.use(cookieParser());
 
   // INFO: Global Pipes
   app.useGlobalPipes(
@@ -42,6 +55,13 @@ export const bootstrap = async () => {
 
   // INFO: Swagger Documentation
   SetupSwaggerDocumentation(app);
+
+  // enabling CORS
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true,
+  });
 
   // INFO: Server PORT
   const configService = app.get(ConfigService);

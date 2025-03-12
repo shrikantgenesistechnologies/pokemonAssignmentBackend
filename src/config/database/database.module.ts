@@ -5,11 +5,11 @@ import { DataSource } from 'typeorm';
 import { OrganizationModule } from '../../organizations/organizations.module';
 import { UsersModule } from '../../users/users.module';
 import { PokemonsModule } from '../../pokemons/pokemons.module';
-import { Users } from '../../users/entity/user.entity';
-import { Organizations } from '../../organizations/entity/organization.entity';
-import { Pokemons } from '../../pokemons/entity/pokemon.entity';
+import { Users } from '../../users/entity/users.entity';
+import { Organizations } from '../../organizations/entity/organizations.entity';
+import { Pokemons } from '../../pokemons/entity/pokemons.entity';
 import { SeederService } from './seeder.service';
-import { Favorite } from '../../favorites/entity/favorite.entity';
+import { Favorites } from '../../favorites/entity/favorites.entity';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { Favorite } from '../../favorites/entity/favorite.entity';
         username: configService.get<string>('database.username'),
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.name'),
-        entities: [Users, Organizations, Pokemons, Favorite],
+        entities: [Users, Organizations, Pokemons, Favorites],
         autoLoadEntities: true,
         synchronize: true,
       }),

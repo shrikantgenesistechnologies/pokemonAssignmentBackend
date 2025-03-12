@@ -4,8 +4,9 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
-import { Organizations } from '../../organizations/entity/organization.entity';
+import { Organizations } from '../../organizations/entity/organizations.entity';
 import {
   IsEmail,
   IsNotEmpty,
@@ -17,7 +18,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Favorite } from '../../favorites/entity/favorite.entity';
+import { Favorites } from '../../favorites/entity/favorites.entity';
 
 @Entity()
 export class Users {
@@ -51,7 +52,7 @@ export class Users {
   @IsOptional()
   email?: string;
 
-  @Column()
+  @Column({ select: false })
   @ApiPropertyOptional({
     description: 'Password for the User',
     example: 'P@ssw0rd!',
@@ -79,15 +80,19 @@ export class Users {
   @IsOptional()
   password?: string;
 
-  @Column({ type: 'bigint', nullable: true })
+  @Column({ type: 'bigint', nullable: true, name: 'last_login_timestamp' })
   @IsOptional()
   lastLoginTimestamp: number;
 
-  @ManyToOne(() => Organizations, (org) => org.users, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Organizations, (org) => org.users, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'organization_id' })
   @IsNotEmpty({ message: 'Organization is required' })
   @IsOptional()
   organization: Organizations;
 
-  @OneToMany(() => Favorite, (favorite) => favorite.user)
-  favorites: Favorite[];
+  @OneToMany(() => Favorites, (favorite) => favorite.user)
+  @JoinColumn({ name: 'favorite_id' })
+  favorites: Favorites[];
 }

@@ -19,12 +19,11 @@ import {
   ApiXListResponses,
   ApiXUpdateResponses,
 } from '../utils/swagger/swagger';
-import { Organizations } from './entity/organization.entity';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Organizations } from './entity/organizations.entity';
+import { ApiParam } from '@nestjs/swagger';
 import { ApiControllerTag } from '../swagger/tags';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 
-@ApiBearerAuth()
 @Controller(ApiControllerTag.Organizations)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
@@ -105,9 +104,9 @@ export class OrganizationsController {
   @ApiXDeleteResponses({
     operationId: 'delete_organization',
     summary: 'Delete an Organization by ID',
-    type: 'string',
+    type: String,
   })
-  deleteOneOrganization(@Param('id') id: string) {
+  deleteOneOrganization(@Param('id') id: string): Promise<{ message: string }> {
     return this.organizationsService.deleteOneOrganization(id);
   }
 }

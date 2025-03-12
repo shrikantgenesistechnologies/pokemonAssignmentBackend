@@ -9,9 +9,13 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dtos/login.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { RegisterDto } from './dtos/register.dto';
-import { Users } from '../users/entity/user.entity';
+import { Users } from '../users/entity/users.entity';
+import {
+  clearAuthCookies,
+  setAuthCookies,
+} from '../utils/cookies/setAuthCookies';
 
 @Injectable()
 export class AuthService {
@@ -45,7 +49,7 @@ export class AuthService {
   private createPayload(user: Users, lastLoginTimestamp?: number) {
     try {
       if (!user.organization?.id) {
-        throw new BadRequestException('User organization ID is missing');
+        throw new BadRequestException('User organization id is missing');
       }
       return {
         id: user.id,
@@ -87,23 +91,25 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, response: Response) {
     try {
       const user = await this.usersService.validateUser({
         email: loginDto.email,
         password: loginDto.password,
       });
       if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException('Email or Password is invalid');
       }
       const lastLoginTimestamp = new Date().getTime();
       user.lastLoginTimestamp = lastLoginTimestamp;
-      await this.usersService.updateOneUser(user.id, {
+      await this.usersService.updateUserLastLoginTimestamp(
+        user.id,
         lastLoginTimestamp,
-      });
+      );
 
       const { accessToken } = await this.createTokens(user, lastLoginTimestamp);
-      return { accessToken, id: user.id };
+      setAuthCookies(response, accessToken, user.id);
+      return { message: 'Login Successful' };
     } catch (error) {
       this.logger.error(
         JSON.stringify({
@@ -116,15 +122,20 @@ export class AuthService {
     }
   }
 
-  async logout(request: Request): Promise<string> {
+  async logout(request: Request, response: Response) {
     try {
       const user = request.user as Users;
       if (user) {
-        await this.usersService.updateOneUser(user.id, {
-          lastLoginTimestamp: new Date().getTime(),
-        });
+        await this.usersService.updateOneUser(
+          user.id,
+          {
+            lastLoginTimestamp: new Date().getTime(),
+          },
+          request,
+        );
       }
-      return 'Logout successful';
+      clearAuthCookies(response);
+      return { message: 'Logout successful' };
     } catch (error) {
       this.logger.error(
         JSON.stringify({
@@ -137,17 +148,26 @@ export class AuthService {
     }
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(
+    registerDto: RegisterDto,
+    response: Response,
+    request: Request,
+  ) {
     try {
       const user = await this.usersService.createOneUser(registerDto);
 
       user.lastLoginTimestamp = new Date().getTime();
-      await this.usersService.updateOneUser(user.id, {
-        lastLoginTimestamp: user.lastLoginTimestamp,
-      });
+      await this.usersService.updateOneUser(
+        user.id,
+        {
+          lastLoginTimestamp: user.lastLoginTimestamp,
+        },
+        request,
+      );
 
       const { accessToken } = await this.createTokens(user);
-      return { accessToken, id: user.id };
+      setAuthCookies(response, accessToken, user.id);
+      return { message: 'Registeration successful' };
     } catch (error) {
       this.logger.error(
         JSON.stringify({
